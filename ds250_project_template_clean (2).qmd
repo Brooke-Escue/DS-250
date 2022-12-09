@@ -1,0 +1,151 @@
+---
+title: "Client Report - [BYUI Baseball Statistics]"
+subtitle: "Course DS 250"
+author: "Brooke Escue"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+    
+---
+
+```{python}
+#| label: libraries
+#| include: false
+
+import pandas as pd
+import sqlite3
+import altair as alt
+
+con = sqlite3.connect('lahmansbaseballdb.sqlite')
+
+
+```
+
+
+## Question 1 
+
+Write an SQL query to create a new dataframe about baseball players who attended BYU-Idaho. The new table should contain five columns: playerID, schoolID, salary, and the yearID/teamID associated with each salary. Order the table by salary (highest to lowest) and print out the table in your report.
+
+When looking at this table, the amount of baseball players that attended BYU-Idaho is only two.  More than I initially thought.  The person that had the highest salary is Lindsman in 2014.  AT that time, he mad 4000000 dollars. 
+
+```{python}
+#| label: project data
+#| code-summary: Read and format project data
+# Include and execute your code here
+
+
+df = pd.read_sql_query("""
+SELECT DISTINCT Salaries.PlayerID, CollegePlaying.SchoolID, Salaries.teamID, Salaries.Salary, Salaries.yearID
+FROM Salaries
+JOIN CollegePlaying ON Salaries.playerID = CollegePlaying.playerID
+WHERE CollegePlaying.schoolID LIKE '%BYUI%' 
+ORDER BY salary DESC
+""",con)
+
+df
+```
+
+# Question 2 
+
+Write an SQL query that provides playerID, yearID, and batting average for players with at least 1 at bat that year. Sort the table from highest batting average to lowest, and then by playerid alphabetically. Show the top 5 results in your report.
+
+In this table, it looked like everyone had the same batting average whih was 1.0.  
+
+```{python}
+ba= pd.read_sql_query("""
+SELECT playerid, yearid,(h * 1.0)/ab as "Batting Average", h, ab
+FROM batting
+WHERE ab >= 1 
+ORDER BY "Batting Average" DESC, playerid 
+limit 5 
+
+""", con)
+ba
+```
+
+## Use the same query as above, but only include players with at least 10 at bats that year. Print the top 5 results.
+
+The person that had the highest batting average was nymanny in 1974.  He had a 64% batting average.  The next highest was Carsoma who had a batting average of 63%  
+
+
+```{python}
+ab= pd.read_sql_query("""
+SELECT playerid, yearid, (h * 1.0)/ab as "Batting Average", h, ab
+FROM batting
+WHERE ab >= 10 
+ORDER BY "Batting Average" desc, playerid 
+limit 5 
+""", con)
+
+ab
+
+```
+
+
+## Now calculate the batting average for players over their entire careers (all years combined). Only include players with at least 100 at bats, and print the top 5 results.
+
+In all years combined, it looks like the person with the highest batting average was cobbty with a 36%.  
+
+```{python}
+ab= pd.read_sql_query("""
+SELECT playerid, yearid, SUM(h *1.0)/SUM(ab) as "Overall Batting Average", h, ab, sum(h * 1.0)/sum(ab)
+FROM batting
+GROUP BY playerid
+HAVING sum(ab) >= 100
+ORDER BY "Overall Batting Average" DESC
+LIMIT 5 
+
+""", con)
+
+ab
+```
+
+## Pick any two baseball teams and compare them using a metric of your choice (average salary, home runs, number of wins, etc). Write an SQL query to get the data you need, then make a graph in Altair to visualize the comparison. What do you learn?
+
+I wanted to look at the team with the most loses. I wanted to see what teams should be avoided when trying to find a team you want to play for.  The teams with the most loses were PHI snf CN1. 
+
+```{python}
+
+losses= pd.read_sql_query("""
+SELECT DISTINCT playerid, yearid,teamid, L
+FROM pitching
+GROUP BY L
+ORDER BY L DESC
+LIMIT 2 
+
+""", con)
+
+losses
+
+
+```
+
+
+```{python}
+
+baseball = (alt.Chart(losses).encode(
+    x =alt.X ("teamID", title = "	Number of Losses"), 
+    y= alt.Y ("L"),
+    color = alt.Color("teamID")
+).mark_bar()
+
+) 
+
+baseball
+
+```

@@ -1,0 +1,95 @@
+---
+title: "Practice Coding Challenge"
+subtitle: "Course DS 250"
+author: "---AUTHOR"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+---
+
+## Practice Coding Challenge
+
+### Name: _Your name here_
+
+### Instructions
+
+_In the Final Coding Challenge I will ask you to complete problems about as challenging as what is shown below.  Plus, you will need to fit a machine learning model with data I provide._
+
+_Remember, you will only have 60 minutes to work on the challenge! You will not be able to complete every question perfectly, but you should spend at least a little time on each question._
+
+_Paste your answers and code inside this `.qmd` file._
+
+
+### Practice Challenges
+
+Start by loading these packages and data:
+
+```{python}
+
+
+from types import GeneratorType
+import pandas as pd
+import altair as alt
+import numpy as np
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import metrics
+import pandas as pd 
+import altair as alt
+import numpy as np
+
+
+wars = 'StarWars.txt'
+wars
+starwars_data = pd.read_csv(wars, encoding = "ISO-8859-1", skiprows = 2, header = None)
+starwars_cols = pd.read_csv(wars, encoding = "ISO-8859-1", nrows = 2, header = None)
+
+starwars_cols.iloc[0,:].str.upper().str.replace(" ", "!")
+starwars_cols
+
+```
+
+
+```{python}
+questions =starwars_cols.iloc[0,:].ffill().unique()
+questions
+response =starwars_cols.iloc[1,:].ffill().unique()
+response
+
+
+```
+
+```{python}
+
+pd.get_dummies(starwars_data.filter(("wh_shot_first", "Gender", "Location"))
+
+
+
+pd.value_counts(wars.seen_any)
+watched = (starwars_cols.filter(['seen_I', 'seen_II', 'seen_III', 'seen_IV', 'seen_V', 'seen_VI']))
+```
+
+
+```{python}
+
+```

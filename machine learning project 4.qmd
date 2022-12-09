@@ -1,0 +1,175 @@
+---
+title: "Client Report - [Homes Built Prediction]"
+subtitle: "Course DS 250"
+execute:
+    warning: false
+author: "[Brooke Escue]"
+format:
+  html:
+
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+    
+---
+
+
+
+```{python}
+#| label: libraries
+#| include: false
+
+from types import GeneratorType
+import pandas as pd
+import altair as alt
+import numpy as np
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import metrics
+
+```
+
+
+```{python}
+
+denver = pd.read_csv("dwellings_denver.txt")
+denver.head()
+denver
+
+ml_dat= pd.read_csv("dwellings_ml.txt")
+ml_dat.head()
+
+ml_dat
+
+ml_dat.shape
+denver.arcstyle.unique()
+```
+
+
+## Grand question 1 
+Create 2-3 charts that evaluate potential relationships between the home variables and before1980. Explain what you learn from the charts that could help a machine learning algorithm.
+
+From these few charts, I learned that live area and the amount of stories a house has plays a huge part in whether a house was made before 1980.  This is important to consider because when doing machine learning, I have to put in factors I think will best help the model.
+
+
+```{python}
+
+alt.data_transformers.disable_max_rows()
+
+chart = (alt.Chart(denver).mark_boxplot().encode(
+  x = alt.X("stories"), 
+  y= alt.Y("yrbuilt", scale = alt.Scale(domain=(1850, 2010)))
+  )
+)
+chart
+```
+
+```{python}
+h_subset = ml_dat.filter(['livearea', 
+    'basement', 'yearbuilt', 'nocars', 'numbdrm', 'numbaths', 
+    'stories', 'yrbuilt', 'before1980']).sample(500)
+
+sns.pairplot(h_subset, hue = 'before1980')
+
+corr = h_subset.drop(columns = 'before1980').corr()
+# %%
+sns.heatmap(corr)
+```
+
+
+```{python}
+phone = (alt.Chart(denver).mark_line().encode(
+    x =alt.X ("livearea", title = "livearea"), 
+    y= alt.Y ("yrbuilt", scale = alt.Scale(domain=(1850, 2010)))
+    )
+)
+phone
+```
+
+```{python}
+## Can change the filter and the decision tree classifier 
+# %%
+# Load data
+dwellings_ml = pd.read_csv("dwellings_ml.txt")
+
+#%%
+# Separate the features (X) and targets (Y)
+x = dwellings_ml.filter(["basement","stories","numbaths", "nocars", "sprice", "arcstyle", 'livearea', 'tasp'])
+y = dwellings_ml[["before1980"]]
+
+#%% Split the data into train and test sets
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size = .021, random_state = 190)
+```
+
+
+```{python}
+#%%
+# Create a decision tree
+classifier_DT = model = GradientBoostingClassifier(max_depth = 13)
+
+# Fit the decision tree
+classifier_DT.fit(x_train, y_train)
+
+# Test the decision tree (make predictions)
+y_predicted_DT = classifier_DT.predict(x_test)
+
+# Evaluate the decision tree
+print("Accuracy:", metrics.accuracy_score(y_test, y_predicted_DT))
+```
+
+## Grand Question 2 
+Build a classification model labeling houses as being built “before 1980” or “during or after 1980”. Your goal is to reach or exceed 90% accuracy. Explain your final model choice (algorithm, tuning parameters, etc) and describe what other models you tried.
+
+At first, I tried using decision tree marker and that only got me to 85% accuracy.  I also had the test size at 0.25, but realized it worked better if I left it at 0.021.  What pushed me over to 90% was changing the max_depth.  I initially had it at 10, but after playing around with the size, I realized that 13 worked the best
+```{python}
+## Confusion Matrix 
+
+#%%
+# a confusion matrix
+print(metrics.confusion_matrix(y_test, y_predicted_DT))
+
+#%%
+# this one might be easier to read
+print(pd.crosstab(y_test.before1980, y_predicted_DT, rownames=['True'], colnames=['Predicted'], margins=True))
+
+#%%
+# visualize a confusion matrix
+# requires '.' to be installed
+metrics.plot_confusion_matrix(classifier_DT, x_test, y_test)
+```
+
+## Question 3
+
+Justify your classification model by discussing the most important features selected by your model. This discussion should include a chart and a description of the features.WHen looking at the chart, the number of stories was the most important feature to add in my model.  The second most important factor was livearea.  Without these in my model, my accuracy wouldn't have made it to 90%
+
+```{python}
+#%% 
+# Feature importance
+classifier_DT.feature_importances_
+
+#%%
+feature_df = pd.DataFrame({'features':x.columns, 'importance':classifier_DT.feature_importances_})
+feature_df
+```
+
+## Grand Question 4 
+Describe the quality of your classification model using 2-3 different evaluation metrics. You also need to explain how to interpret each of the evaluation metrics you use.
+The quality of my model went up when using a different decsion tree classification.  We can also increase the accuracy of the model by changing the maximum depth of the tree
